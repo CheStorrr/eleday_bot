@@ -5,6 +5,7 @@ from database.database import Database
 from models.user import User
 
 from middlewares.database_middleware import DatabaseMiddleware
+from middlewares.admin_middleware import AdminMiddleware
 
 from routers import games, admin_commands
 
@@ -28,9 +29,11 @@ async def start_command(
 async def main():
     async with aiosqlite.connect('database/database.db') as conn:
         db = Database(conn)
-        
+        await db.create_tables()
 
         dp.message.middleware(DatabaseMiddleware(db=db))
+
+        admin_commands.router.message.middleware(AdminMiddleware(db=db))
 
         dp.include_routers(
             games.router,

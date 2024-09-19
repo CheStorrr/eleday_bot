@@ -1,7 +1,7 @@
 from database.database import Database
 from aiosqlite import Connection, connect
 
-from typing import Optional
+from typing import Literal, Optional
 
 class User(Database):
 
@@ -53,3 +53,18 @@ class User(Database):
         await self.db.execute(f"UPDATE users SET name = ?, username = ?, balance = ?, messages = ?, warns = ?, reputation = ?, is_admin = ?, is_ban = ?, is_mute = ? WHERE id = ?", args)
 
         await self.db.commit()
+
+
+    async def find(self, **kwargs: Literal['username', 'name']):
+        username_or_name = 'username' if 'username' in kwargs else 'name'
+        value = kwargs['username'].replace('@', '') if 'username' in kwargs else kwargs['name']
+        query = f"SELECT * FROM users WHERE {username_or_name} = ?"
+        print(query, value)
+        cur = await self.db.execute(query, (value,))
+        is_user = await cur.fetchone()
+        print(is_user)
+        if is_user:
+            await self.init(is_user['id'])
+            return self
+        
+        return None

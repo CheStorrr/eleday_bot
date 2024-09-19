@@ -14,7 +14,7 @@ class Database:
 
 
  
-    async def __create_tables(self) -> None:
+    async def create_tables(self) -> None:
         await self.db.execute("""
             CREATE TABLE IF NOT EXISTS users(
             id BIGINT PRIMARY KEY,
@@ -29,6 +29,18 @@ class Database:
             is_admin BOOLEAN,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )""")
+
+        await self.db.execute("""
+            CREATE TABLE IF NOT EXISTS restricted(
+            admin_id BIGINT,
+            type_restricks TEXT,
+            reason TEXT,
+            user_restricted_id,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )   
+        """)
         await self.db.commit()
+
+        
 
   
