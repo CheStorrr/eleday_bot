@@ -1,10 +1,11 @@
-from aiogram import Router, F 
+from aiogram import Bot, Router, F 
 
-from aiogram.types import Message 
+from aiogram.types import Message, CallbackQuery
 from aiogram.filters import Command
 
 from models.admin import Admin
 from models.user import User
+from config import main_chat
 
 import time
 
@@ -129,3 +130,61 @@ async def warn_command(
         await my_message.edit_text(f"Пользователю {result.link} было выдано {result.warns} предупреждение из 3\n\nОн был обеззвучен на {result.warns} часов")
     
 
+@router.message(Command('ban'))
+async def ban_handler(
+    message: Message,
+    user: User,
+    admin: Admin
+
+    
+):
+    
+    args = message.text.splitlines()[0].split('/ban')[1]
+
+
+    arg_name = None
+
+    reply = message.reply_to_message
+
+    if reply is not None:
+        arg_name = reply.from_user.id
+
+    else:
+        if len(args) > 0:
+            arg_name = args.split()[0]
+
+            if message.entities[1].user is not None:
+                arg_name = message.entities[1].user.id
+
+        else:
+            return await message.reply(f"Это команда должна использоваться с @user или реплай на пользователя")
+
+
+
+    my_message = await message.answer(f"Главному советнику был отправлен запрос на бан пользователя. Ожидайте")
+    await admin.request_ban(arg_name, my_message.message_id)
+
+@router.callback_query(lambda call: "ban" in call.data)
+async def request_ban_handler(
+    call: CallbackQuery,
+    admin: Admin,
+    bot: Bot
+):
+    if call.from_user.id != admin.main_admin_id:
+        return 
+    
+    
+    message_id = int(call.data.split("_")[2]) 
+    if "reject" in call.data:
+
+        await bot.edit_message_text("Главный советник отклонил запрос на бан.", main_chat, message_id)
+        await call.message.edit_text("Вы отклонили запрос на бан")
+        return 
+    
+
+    user_ban_id = int(call.data.split("_")[3]) 
+    ban_user = User(admin.db)
+    await ban_user.init(user_ban_id)
+    await bot.ban_chat_member(main_chat, user_ban_id)
+    await bot.edit_message_text(f"Главный советник принял запрос на бан.\n{ban_user.link} был забанен", main_chat, message_id)
+    await call.message.edit_text(f"Вы забанили {ban_user.link}")

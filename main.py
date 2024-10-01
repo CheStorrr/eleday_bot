@@ -5,7 +5,7 @@ from database.database import Database
 from models.user import User
 
 from middlewares.database_middleware import DatabaseMiddleware
-from middlewares.admin_middleware import AdminMiddleware
+from middlewares.admin_middleware import AdminMiddleware, AdminCallbackMiddleware
 
 from routers import games, admin_commands
 
@@ -36,6 +36,7 @@ async def main():
         dp.message.middleware(DatabaseMiddleware(db=db))
 
         admin_commands.router.message.middleware(AdminMiddleware(db=db))
+        admin_commands.router.callback_query.middleware(AdminCallbackMiddleware(db=db))
 
         dp.include_routers(
             games.router,

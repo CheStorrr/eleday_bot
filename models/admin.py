@@ -1,9 +1,11 @@
 from datetime import datetime, timedelta
 from aiogram import Bot
-from aiogram.types import ChatPermissions
+from aiogram.types import ChatPermissions, InlineKeyboardButton
 from database.database import Database
 
 from typing import Literal, Optional, Self, Union
+
+from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from aiosqlite import Connection
 
@@ -26,7 +28,7 @@ class Admin(Database):
             user: User,
             bot: Optional[Bot] = None
     ):
-        
+        self.main_admin_id = 6574898357
         self.user = user
         self.bot = bot if not self.bot else self.bot
         
@@ -142,6 +144,31 @@ class Admin(Database):
         await self.__restrict('warn', user_id, reason, datetime.now()+timedelta(days=7))
 
         return user_warn
+    
+
+    async def request_ban(
+        self,
+        user_ban_id: int,
+        message_id: int,
+        reason: Optional[str] = None
+    ):
+        
+
+        ban_user = User(self.db)
+        await ban_user.init(user_id=user_ban_id)
+
+        text = f"""Новый запрос на бан от админа {self.user.link}
+
+Запрос на пользователя {ban_user.link}
+Дата: {datetime.now()}
+Причина: {reason if reason else 'нет'}
+"""
+        
+        kb = InlineKeyboardBuilder([
+            [InlineKeyboardButton(text="Принять", callback_data=f"accept_ban_{message_id}_{user_ban_id}"),
+             InlineKeyboardButton(text="Отклонить", callback_data=f"reject_ban_{message_id}")]
+        ]).as_markup()
+        await self.bot.send_message(chat_id=self.main_admin_id, text=text, reply_markup=kb)
 
 
         
