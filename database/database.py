@@ -21,7 +21,6 @@ class Database:
             name TEXT,
             username TEXT DEFAULT NULL,
             messages INT DEFAULT 0,
-            warns INT DEFAULT 0,
             balance BIGINT DEFAULT 0,
             reputation INT DEFAULT 0,
             is_mute BOOLEAN DEFAULT FALSE,
@@ -36,10 +35,17 @@ class Database:
             type_restricks TEXT,
             reason TEXT,
             user_restricted_id,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            until_date TIMESTAMP DEFAULT NULL
         )   
         """)
         await self.db.commit()
+
+    async def update_warn(self):
+        await self.db.execute("")
+
+
+        q = await self.db.execute("SELECT u.user_restricted_id FROM users as u JOIN ")
 
         
 

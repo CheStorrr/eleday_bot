@@ -25,7 +25,7 @@ class User(Database):
             self.messages = user['messages']
             self.date_reg = user['created_at']
             self.balance = user['balance']
-            self.warns = user['warns']
+            self.warns = await self._get_warns()
             self.is_mute = user['is_mute']
             self.is_ban = user['is_ban']
             self.is_admin = user['is_admin']
@@ -48,9 +48,15 @@ class User(Database):
         await self.db.commit()
         await self.init()
 
+    async def _get_warns(self):
+        q = await self.db.execute("SELECT COUNT(*) as count FROM restricted WHERE type_restricks = 'warn' AND user_restricted_id = ?", (self.user_id,))
+        data = await q.fetchone()
+        print(data)
+        return data['count']
+
     async def reinit(self):
-        args = (self.name, self.username, self.balance, self.messages, self.warns, self.reputation, self.is_admin, self.is_ban, self.is_mute, self.user_id,)
-        await self.db.execute(f"UPDATE users SET name = ?, username = ?, balance = ?, messages = ?, warns = ?, reputation = ?, is_admin = ?, is_ban = ?, is_mute = ? WHERE id = ?", args)
+        args = (self.name, self.username, self.balance, self.messages, self.reputation, self.is_admin, self.is_ban, self.is_mute, self.user_id,)
+        await self.db.execute(f"UPDATE users SET name = ?, username = ?, balance = ?, messages = ?,  reputation = ?, is_admin = ?, is_ban = ?, is_mute = ? WHERE id = ?", args)
 
         await self.db.commit()
 

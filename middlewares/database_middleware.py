@@ -39,4 +39,5 @@ class DatabaseMiddleware(BaseMiddleware):
             
         data['user'] = user 
         print(event.text)
-        return await handler(event, data)
+        await handler(event, data)
+        await user.reinit()

@@ -57,9 +57,10 @@ class Admin(Database):
             self,
             type_restrict: Literal['mute', 'ban', 'warn', 'rep', 'tick'],
             user_resrickted_id: int,
-            reason: Optional[str] = None
+            reason: Optional[str] = None,
+            until_date: Optional[datetime] = None
     ):
-        await self.db.execute("INSERT INTO restricted (admin_id, type_restricks, user_restricted_id, reason) VALUES (?,?,?,?)", (self.user.user_id, type_restrict, user_resrickted_id, reason,))
+        await self.db.execute("INSERT INTO restricted (admin_id, type_restricks, user_restricted_id, reason, until_date) VALUES (?,?,?,?,?)", (self.user.user_id, type_restrict, user_resrickted_id, reason, until_date,))
         await self.db.commit()
 
 
@@ -73,24 +74,75 @@ class Admin(Database):
         user_mute = User(self.db)
 
         if isinstance(arg_name, int):
-            user_mute = User(self.db)
             await user_mute.init(arg_name)
            
 
         elif arg_name[0] == '@':
             user_mute = await user_mute.find(username=arg_name)
 
-        else:
-            user_mute = await self.user.find(name=arg_name)
-
         member = await self.bot.get_chat_member(chat_id=chat_id, user_id=user_mute.user_id)
         if member.status in ['administrator', 'creator']:
             return 0
         permissions = ChatPermissions(can_send_messages=False)
-        await self.__restrict(type_restrict='mute', user_resrickted_id=user_mute.user_id, reason=reason)
+        await self.__restrict(type_restrict='mute', user_resrickted_id=user_mute.user_id, reason=reason, until_date=datetime.now()+timedelta(minutes=duration))
         await self.bot.restrict_chat_member(chat_id=chat_id, user_id=user_mute.user_id, permissions=permissions, until_date=timedelta(minutes=duration))
 
         return user_mute
+    
+    async def unmute(
+        self,
+        arg_name: Union[str, int],
+        chat_id: int
+    ):
+        user_unmute = User(self.db)
+
+        if isinstance(arg_name, int):
+            await user_unmute.init(arg_name)
+           
+
+        elif arg_name[0] == '@':
+            user_unmute = await user_unmute.find(username=arg_name)
+
+        member = await self.bot.get_chat_member(chat_id=chat_id, user_id=user_unmute.user_id)
+        if member.status in ['administrator', 'creator']:
+            return 0
+        permissions = ChatPermissions(
+            can_send_audios=True,
+            can_send_documents=True,
+            can_send_messages=True,
+            can_send_other_messages=True,
+            can_send_photos=True,
+            can_send_polls=True,
+            can_send_video_notes=True,
+            can_send_videos=True,
+            can_send_voice_notes=True,
+            can_add_web_page_previews=True,
+            can_invite_users=True
+        )
+        await self.bot.restrict_chat_member(chat_id=chat_id, user_id=user_unmute.user_id, permissions=permissions)
+
+        return user_unmute
+    
+
+    async def warn(
+        self,
+        chat_id: int,
+        user_id,
+        reason: Optional[str]
+    ):
+        
+        user_warn = User(self.db)
+        await user_warn.init(user_id=user_id)
+        
+        
+        member = await self.bot.get_chat_member(chat_id=chat_id, user_id=user_warn.user_id)
+        if member.status in ['administrator', 'creator']:
+            return 0
+        user_warn.warns += 1
+        await self.__restrict('warn', user_id, reason, datetime.now()+timedelta(days=7))
+
+        return user_warn
+
 
         
 

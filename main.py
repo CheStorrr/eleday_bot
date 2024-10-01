@@ -25,6 +25,8 @@ async def start_command(
     return await message.answer(f"Здравствуй, {user.link}! Я бот-модератор для чата @eledayhut. Чтобы узнать команды, напиши /help. \nЧтобы ознакомиться с правилами, напиши /rules")
 
 
+async def check_restricts(db: Database):
+    ...
 
 async def main():
     async with aiosqlite.connect('database/database.db') as conn:
@@ -40,7 +42,6 @@ async def main():
             admin_commands.router
         )
 
-
-        await dp.start_polling(bot)
+        await asyncio.gather(dp.start_polling(bot), check_restricts(db))
 
 asyncio.run(main())

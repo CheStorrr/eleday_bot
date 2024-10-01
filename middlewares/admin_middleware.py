@@ -33,4 +33,5 @@ class AdminMiddleware(BaseMiddleware):
 
         data['admin'] = admin
         
-        return await handler(event, data)
+        await handler(event, data)
+        
